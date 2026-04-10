@@ -32,14 +32,20 @@
     window._fsOnSnapshot = onSnapshot;
     window._fsQuery = query;
     window._fsOrderBy = orderBy;
+    window._firebaseReady = true;
 
-    // Start listening once DB is ready
-    window.addEventListener('DOMContentLoaded', () => {
-      window._initFirestore && window._initFirestore();
-    });
-    // If DOMContentLoaded already fired
-    if (document.readyState !== 'loading') {
-      setTimeout(() => window._initFirestore && window._initFirestore(), 100);
+    // Start listening — wait for both DOM and this module to finish
+    function tryInit() {
+      if (window._initFirestore) {
+        window._initFirestore();
+      } else {
+        setTimeout(tryInit, 50);
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryInit);
+    } else {
+      tryInit();
     }
   </script>
   <style>
@@ -859,14 +865,204 @@
       pointer-events: none;
     }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 600px) {
-      .summary { grid-template-columns: 1fr; gap: 10px; }
-      .fields  { grid-template-columns: 1fr 1fr; }
-      .fields .f-desc { grid-column: 1 / -1; }
-      header h1 { font-size: 2rem; }
-      .btn-row { grid-template-columns: 1fr; }
-      .month-grid { grid-template-columns: 1fr; }
+    /* ── RESPONSIVE / MOBILE ── */
+
+    /* Bottom nav bar for mobile */
+    .bottom-nav {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      /* General */
+      body { font-size: 15px; }
+
+      .container {
+        padding: 1.2rem 0.85rem 6rem;
+      }
+
+      /* Header */
+      header { margin-bottom: 1.5rem; }
+      header h1 { font-size: 1.7rem; }
+      header p { font-size: 0.85rem; }
+
+      /* Summary cards - horizontal scroll row */
+      .summary {
+        grid-template-columns: repeat(3, minmax(130px, 1fr));
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .summary::-webkit-scrollbar { display: none; }
+      .card { padding: 1rem 0.9rem; border-radius: 16px; }
+      .card .value { font-size: 1.1rem; }
+      .card label { font-size: 9px; }
+      .card-icon-wrap { width: 36px; height: 36px; font-size: 1rem; margin-bottom: 7px; }
+
+      /* Sections */
+      .section { border-radius: 18px; margin-bottom: 1rem; }
+      .section-header { padding: 1rem 1.1rem; }
+      .section-body { padding: 1rem; }
+      .section-title { font-size: 0.87rem; }
+
+      /* Form fields */
+      .fields {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .fields .f-desc {
+        grid-column: 1 / -1;
+      }
+      .fields2 {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      input, select {
+        padding: 12px 12px;
+        font-size: 14px;
+        border-radius: 10px;
+      }
+
+      /* Buttons */
+      .btn-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .btn { padding: 14px; font-size: 15px; border-radius: 12px; }
+
+      /* Transactions list */
+      .tx-list { max-height: none; }
+      .tx-item { padding: 11px 1rem; gap: 9px; }
+      .tx-icon { width: 36px; height: 36px; font-size: 15px; border-radius: 11px; }
+      .tx-desc { font-size: 13px; }
+      .tx-meta { font-size: 10px; }
+      .tx-amount { font-size: 12.5px; }
+      .tx-del { width: 26px; height: 26px; font-size: 10px; }
+
+      /* Filters */
+      .filters { gap: 5px; }
+      .filt { padding: 4px 11px; font-size: 11px; }
+
+      /* Chart */
+      .bar-label { font-size: 11px; min-width: 70px; }
+      .bar-pct { font-size: 11px; }
+      .bar-val { font-size: 9px; }
+
+      /* Monthly report */
+      .month-grid { grid-template-columns: 1fr; gap: 10px; padding: 1rem; }
+      .month-card { padding: 1rem; border-radius: 14px; }
+      .month-name { font-size: 0.9rem; }
+
+      /* Login box */
+      .login-box { padding: 2rem 1.3rem; margin: 1rem; border-radius: 22px; }
+      .login-title { font-size: 1.3rem; }
+
+      /* Bottom navigation bar */
+      .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: rgba(16, 20, 31, 0.95);
+        border-top: 1px solid var(--border);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        z-index: 100;
+        padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+        justify-content: space-around;
+        align-items: center;
+      }
+      .nav-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-family: 'Cairo', sans-serif;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 14px;
+        border-radius: 12px;
+        transition: color 0.2s, background 0.2s;
+        flex: 1;
+      }
+      .nav-btn svg { width: 20px; height: 20px; }
+      .nav-btn.active { color: var(--accent2); }
+      .nav-btn.active span { color: var(--accent2); }
+
+      /* FAB add button */
+      .fab-add {
+        display: flex;
+        position: fixed;
+        bottom: calc(70px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%);
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border: none;
+        color: #fff;
+        font-size: 26px;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 24px var(--accent-glow);
+        cursor: pointer;
+        z-index: 101;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .fab-add:active { transform: translateX(-50%) scale(0.93); }
+
+      /* Sections shown/hidden by nav */
+      .section[data-section] { display: none; }
+      .section[data-section].active-section { display: block; }
+      .summary { display: none; }
+      .summary.active-section { display: grid; }
+      header { display: none; }
+      header.active-section { display: block; }
+
+      /* Add modal on mobile */
+      .add-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(6px);
+        z-index: 200;
+        display: flex;
+        align-items: flex-end;
+        animation: fadeIn 0.2s ease both;
+      }
+      .add-modal {
+        background: var(--surface-solid);
+        border: 1px solid var(--border2);
+        border-radius: 24px 24px 0 0;
+        padding: 1.5rem 1.2rem calc(1.5rem + env(safe-area-inset-bottom));
+        width: 100%;
+        animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1) both;
+      }
+      .add-modal-handle {
+        width: 36px; height: 4px;
+        background: var(--border2);
+        border-radius: 100px;
+        margin: 0 auto 1.2rem;
+      }
+      .add-modal-title {
+        font-size: 1rem;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 1.2rem;
+        text-align: center;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to   { transform: translateY(0); }
+      }
+    }
+
+    /* Safe area for notched phones */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      @media (max-width: 640px) {
+        .container { padding-top: calc(1.2rem + env(safe-area-inset-top)); }
+      }
     }
   </style>
 </head>
@@ -896,7 +1092,7 @@
 <div class="container">
 
   <!-- HEADER -->
-  <header>
+  <header data-section="home" class="active-section">
     <div class="header-badge"><span></span>مدير المال الشخصي</div>
     <h1>💸 تحكّم في مالك</h1>
     <p>تتبّع دخلك ومصروفاتك بدقة واحترافية</p>
@@ -907,7 +1103,7 @@
   </header>
 
   <!-- SUMMARY -->
-  <div class="summary">
+  <div class="summary active-section" data-section="home">
     <div class="card income">
       <div class="card-icon-wrap">📈</div>
       <label>إجمالي الدخل</label>
@@ -926,7 +1122,7 @@
   </div>
 
   <!-- FORM -->
-  <div class="section form-section">
+  <div class="section form-section active-section" data-section="home">
     <div class="section-header">
       <div class="section-title">
         <div class="dot" style="background:var(--accent);box-shadow:0 0 8px var(--accent)"></div>
@@ -968,7 +1164,7 @@
   </div>
 
   <!-- TRANSACTIONS -->
-  <div class="section tx-section">
+  <div class="section tx-section" data-section="txs">
     <div class="section-header">
       <div class="section-title">
         <div class="dot" style="background:var(--accent2);box-shadow:0 0 8px var(--accent2)"></div>
@@ -984,7 +1180,7 @@
   </div>
 
   <!-- CHART -->
-  <div class="section chart-section">
+  <div class="section chart-section" data-section="chart">
     <div class="section-header">
       <div class="section-title">
         <div class="dot" style="background:var(--red);box-shadow:0 0 8px var(--red)"></div>
@@ -997,7 +1193,7 @@
   </div>
 
   <!-- MONTHLY REPORT -->
-  <div class="section monthly-section">
+  <div class="section monthly-section" data-section="monthly">
     <div class="section-header">
       <div class="section-title">
         <div class="dot" style="background:var(--gold);box-shadow:0 0 8px var(--gold)"></div>
@@ -1011,6 +1207,72 @@
 
 <!-- TOAST -->
 <div id="toast"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="nav-btn active" onclick="mobileNav('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>
+    <span>الرئيسية</span>
+  </button>
+  <button class="nav-btn" onclick="mobileNav('txs',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="3"/></svg>
+    <span>المعاملات</span>
+  </button>
+  <button class="nav-btn" style="width:56px" onclick="openAddModal()">
+    <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px var(--accent-glow);margin-bottom:2px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+    <span style="color:var(--accent2)">إضافة</span>
+  </button>
+  <button class="nav-btn" onclick="mobileNav('chart',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>الإحصاء</span>
+  </button>
+  <button class="nav-btn" onclick="mobileNav('monthly',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>الشهري</span>
+  </button>
+</nav>
+
+<!-- MOBILE ADD MODAL -->
+<div id="add-modal-overlay" style="display:none" onclick="closeAddModal(event)">
+  <div class="add-modal-overlay">
+    <div class="add-modal" onclick="event.stopPropagation()">
+      <div class="add-modal-handle"></div>
+      <div class="add-modal-title">➕ إضافة معاملة جديدة</div>
+      <div class="fields" style="margin-bottom:10px">
+        <input class="f-desc" type="text" id="m-desc" placeholder="الوصف (مرتب، إيجار، طعام...)" />
+        <input type="number" id="m-amount" placeholder="المبلغ" min="0" inputmode="decimal" />
+        <select id="m-category">
+          <option value="عام">📌 عام</option>
+          <option value="مرتب">💼 مرتب</option>
+          <option value="طعام">🍔 طعام</option>
+          <option value="مواصلات">🚗 مواصلات</option>
+          <option value="إيجار">🏠 إيجار</option>
+          <option value="ترفيه">🎮 ترفيه</option>
+          <option value="صحة">💊 صحة</option>
+          <option value="ملابس">👕 ملابس</option>
+          <option value="فواتير">📋 فواتير</option>
+          <option value="استثمار">📈 استثمار</option>
+        </select>
+      </div>
+      <div class="fields2" style="margin-bottom:14px">
+        <input type="text" id="m-note" placeholder="ملاحظة (اختياري)" />
+        <input type="date" id="m-date" />
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-income" onclick="addTxModal('income')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+          دخل
+        </button>
+        <button class="btn btn-expense" onclick="addTxModal('expense')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+          مصروف
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   const CAT_ICONS = { مرتب:'💼', طعام:'🍔', مواصلات:'🚗', إيجار:'🏠', ترفيه:'🎮', صحة:'💊', ملابس:'👕', فواتير:'📋', استثمار:'📈', عام:'📌' };
@@ -1037,6 +1299,9 @@
     if (!el) return;
     el.style.display = show ? 'flex' : 'none';
   }
+
+  // show loading while Firebase connects
+  document.addEventListener('DOMContentLoaded', () => showLoading(true));
 
   async function addTx(type) {
     const desc   = document.getElementById('desc').value.trim();
@@ -1185,220 +1450,89 @@
 
   // ── FIRESTORE INIT ──
   window._initFirestore = function() {
-    if (!window._db) { setTimeout(window._initFirestore, 200); return; }
-    const q = window._fsQuery(
-      window._fsCollection(window._db, 'transactions'),
-      window._fsOrderBy('createdAt', 'desc')
-    );
-    _unsubscribe = window._fsOnSnapshot(q, (snapshot) => {
-      txs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      render();
+    if (!window._db || !window._firebaseReady) { setTimeout(window._initFirestore, 100); return; }
+    if (_unsubscribe) return; // already subscribed, don't double-init
+    showLoading(true);
+    try {
+      const q = window._fsQuery(
+        window._fsCollection(window._db, 'transactions'),
+        window._fsOrderBy('createdAt', 'desc')
+      );
+      _unsubscribe = window._fsOnSnapshot(q, (snapshot) => {
+        txs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        render();
+        showLoading(false);
+      }, (err) => {
+        showToast('خطأ في الاتصال بـ Firestore: ' + err.message, '❌');
+        showLoading(false);
+      });
+    } catch(e) {
+      showToast('خطأ في تهيئة Firebase: ' + e.message, '❌');
       showLoading(false);
-    }, (err) => {
-      showToast('خطأ في الاتصال بـ Firestore', '❌');
-      showLoading(false);
-    });
+    }
   };
 
-  // ── LOGIN ──
-  function doLogin() {
-    const u = document.getElementById('login-user').value.trim();
-    const p = document.getElementById('login-pass').value.trim();
-    const errEl = document.getElementById('login-error');
-    if (u === 'divid' && p === '191020') {
-      errEl.style.display = 'none';
-      const overlay = document.getElementById('login-overlay');
-      overlay.style.animation = 'fadeOut 0.4s ease forwards';
-      setTimeout(() => overlay.remove(), 400);
-    } else {
-      errEl.style.display = 'block';
-      document.getElementById('login-pass').value = '';
-      document.getElementById('login-pass').focus();
+  // ── MOBILE NAV ──
+  const isMobile = () => window.innerWidth <= 640;
+
+  function mobileNav(section, btn) {
+    if (!isMobile()) return;
+    document.querySelectorAll('[data-section]').forEach(el => el.classList.remove('active-section'));
+    document.querySelectorAll(`[data-section="${section}"]`).forEach(el => el.classList.add('active-section'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function openAddModal() {
+    const overlay = document.getElementById('add-modal-overlay');
+    overlay.style.display = 'block';
+    document.getElementById('m-date').value = today();
+    setTimeout(() => document.getElementById('m-desc').focus(), 300);
+  }
+
+  function closeAddModal(e) {
+    if (!e || e.target === document.getElementById('add-modal-overlay') || e === 'force') {
+      document.getElementById('add-modal-overlay').style.display = 'none';
     }
   }
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && document.getElementById('login-overlay')) doLogin();
-  });
 
-  render();
-</script>
-
-  let txs = [];
-  try { txs = JSON.parse(localStorage.getItem('moneymgr_txs2') || '[]'); } catch(e) {}
-  let filter = 'all';
-
-  function fmt(n) {
-    return n.toLocaleString('ar-EG') + ' ج';
-  }
-  function today() { return new Date().toISOString().split('T')[0]; }
-
-  document.getElementById('tx-date').value = today();
-
-  function showToast(msg, icon = '✅') {
-    const t = document.getElementById('toast');
-    t.innerHTML = `<span>${icon}</span>${msg}`;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2200);
-  }
-
-  function addTx(type) {
-    const desc   = document.getElementById('desc').value.trim();
-    const amount = parseFloat(document.getElementById('amount').value);
-    const cat    = document.getElementById('category').value;
-    const note   = document.getElementById('note').value.trim();
-    const date   = document.getElementById('tx-date').value || today();
-
-    const dEl = document.getElementById('desc');
-    const aEl = document.getElementById('amount');
-    dEl.style.borderColor = '';
-    aEl.style.borderColor = '';
-
+  async function addTxModal(type) {
+    const desc   = document.getElementById('m-desc').value.trim();
+    const amount = parseFloat(document.getElementById('m-amount').value);
+    const cat    = document.getElementById('m-category').value;
+    const note   = document.getElementById('m-note').value.trim();
+    const date   = document.getElementById('m-date').value || today();
+    const dEl = document.getElementById('m-desc');
+    const aEl = document.getElementById('m-amount');
+    dEl.style.borderColor = ''; aEl.style.borderColor = '';
     if (!desc)                        { dEl.style.borderColor = 'var(--red)'; dEl.focus(); return; }
     if (isNaN(amount) || amount <= 0) { aEl.style.borderColor = 'var(--red)'; aEl.focus(); return; }
-
-    txs.unshift({ id: Date.now(), type, desc, amount, cat, note, date });
-    save();
-    dEl.value = ''; aEl.value = '';
-    document.getElementById('note').value = '';
-    document.getElementById('tx-date').value = today();
-    render();
-    showToast(type === 'income' ? 'تم إضافة الدخل بنجاح' : 'تم إضافة المصروف بنجاح', type === 'income' ? '📈' : '📉');
+    const tx = { type, desc, amount, cat, note, date, createdAt: Date.now() };
+    try {
+      showLoading(true);
+      await window._fsAddDoc(window._fsCollection(window._db, 'transactions'), tx);
+      dEl.value = ''; aEl.value = '';
+      document.getElementById('m-note').value = '';
+      document.getElementById('m-date').value = today();
+      closeAddModal('force');
+      showToast(type === 'income' ? 'تم إضافة الدخل 📈' : 'تم إضافة المصروف 📉');
+      if (isMobile()) mobileNav('txs', document.querySelectorAll('.nav-btn')[1]);
+    } catch(e) {
+      showToast('خطأ في الحفظ: ' + e.message, '❌');
+    } finally { showLoading(false); }
   }
 
-  function deleteTx(id) {
-    txs = txs.filter(t => t.id !== id);
-    save();
-    render();
-    showToast('تم حذف المعاملة', '🗑️');
-  }
-
-  function save() {
-    try { localStorage.setItem('moneymgr_txs2', JSON.stringify(txs)); } catch(e) {}
-  }
-
-  function setFilter(f, el) {
-    filter = f;
-    document.querySelectorAll('.filt').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
-    renderList();
-  }
-
-  function render() { renderSummary(); renderList(); renderChart(); renderMonthly(); }
-
-  const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-
-  function renderMonthly() {
-    const el = document.getElementById('monthly-report');
-    if (!txs.length) {
-      el.innerHTML = '<div class="no-months"><span>📅</span>لا توجد بيانات بعد</div>';
-      return;
+  function initMobileLayout() {
+    if (isMobile()) {
+      document.querySelectorAll('[data-section]').forEach(el => el.classList.remove('active-section'));
+      document.querySelectorAll('[data-section="home"]').forEach(el => el.classList.add('active-section'));
+    } else {
+      document.querySelectorAll('[data-section]').forEach(el => el.classList.add('active-section'));
     }
-
-    // group by YYYY-MM
-    const map = {};
-    txs.forEach(t => {
-      const key = t.date.slice(0, 7); // YYYY-MM
-      if (!map[key]) map[key] = { inc: 0, exp: 0 };
-      if (t.type === 'income')  map[key].inc += t.amount;
-      else                      map[key].exp += t.amount;
-    });
-
-    const nowKey = today().slice(0, 7);
-    const sorted = Object.keys(map).sort((a,b) => b.localeCompare(a));
-
-    el.innerHTML = '<div class="month-grid">' + sorted.map(key => {
-      const [y, m] = key.split('-');
-      const name = MONTHS_AR[parseInt(m)-1] + ' ' + y;
-      const { inc, exp } = map[key];
-      const bal = inc - exp;
-      const saveRate = inc > 0 ? Math.max(0, Math.round((bal / inc) * 100)) : 0;
-      const isCurrent = key === nowKey;
-      const barColor = saveRate >= 50 ? 'var(--green)' : saveRate >= 20 ? 'var(--gold)' : 'var(--red)';
-
-      return `
-        <div class="month-card ${isCurrent ? 'current-month' : ''}">
-          <div class="month-name">📅 ${name}</div>
-          <div class="month-rows">
-            <div class="month-row">
-              <span class="mlabel">📈 الدخل</span>
-              <span class="mval green">+${fmt(inc)}</span>
-            </div>
-            <div class="month-row">
-              <span class="mlabel">📉 المصروف</span>
-              <span class="mval red">-${fmt(exp)}</span>
-            </div>
-            <div class="month-row" style="border-top:1px solid var(--border);padding-top:7px;margin-top:2px">
-              <span class="mlabel">🏦 المتبقي</span>
-              <span class="mval ${bal >= 0 ? 'green' : 'red'}">${bal >= 0 ? '+' : ''}${fmt(bal)}</span>
-            </div>
-          </div>
-          <div class="save-bar-wrap">
-            <div class="save-bar-label">
-              <span>نسبة الادخار</span>
-              <span style="color:${barColor};font-family:'Space Mono',monospace">${saveRate}%</span>
-            </div>
-            <div class="save-bar-track">
-              <div class="save-bar-fill" style="width:${saveRate}%;background:${barColor};box-shadow:0 0 8px ${barColor}88"></div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('') + '</div>';
   }
-
-  function renderSummary() {
-    const inc = txs.filter(t => t.type === 'income').reduce((s,t)=>s+t.amount, 0);
-    const exp = txs.filter(t => t.type === 'expense').reduce((s,t)=>s+t.amount, 0);
-    const bal = inc - exp;
-    document.getElementById('total-income').textContent  = fmt(inc);
-    document.getElementById('total-expense').textContent = fmt(exp);
-    const bEl = document.getElementById('balance');
-    bEl.textContent = fmt(bal);
-    bEl.style.color = bal >= 0 ? 'var(--green)' : 'var(--red)';
-    bEl.style.textShadow = bal >= 0 ? '0 0 20px var(--green-glow)' : '0 0 20px var(--red-glow)';
-  }
-
-  function renderList() {
-    const el = document.getElementById('tx-list');
-    const list = filter === 'all' ? txs : txs.filter(t => t.type === filter);
-    if (!list.length) {
-      el.innerHTML = '<div class="empty"><span>💸</span>لا توجد معاملات — ابدأ الآن!</div>';
-      return;
-    }
-    el.innerHTML = list.map(t => `
-      <div class="tx-item ${t.type}-item" style="animation-delay:${Math.random()*0.1}s">
-        <div class="tx-icon ${t.type === 'income' ? 'in' : 'out'}">${CAT_ICONS[t.cat] || '📌'}</div>
-        <div class="tx-body">
-          <div class="tx-desc">${t.desc}${t.note ? ' — <span style="color:var(--muted);font-weight:400">' + t.note + '</span>' : ''}</div>
-          <div class="tx-meta">${t.cat} &nbsp;·&nbsp; ${t.date}</div>
-        </div>
-        <div class="tx-amount ${t.type === 'income' ? 'in' : 'out'}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</div>
-        <button class="tx-del" onclick="deleteTx(${t.id})" title="حذف">✕</button>
-      </div>
-    `).join('');
-  }
-
-  function renderChart() {
-    const el = document.getElementById('cat-chart');
-    const exp = txs.filter(t => t.type === 'expense');
-    if (!exp.length) { el.innerHTML = '<div class="no-data">لا توجد مصروفات بعد</div>'; return; }
-    const cats = {};
-    exp.forEach(t => { cats[t.cat] = (cats[t.cat] || 0) + t.amount; });
-    const total = Object.values(cats).reduce((s,v)=>s+v, 0);
-    const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]);
-    el.innerHTML = sorted.map(([cat, val], i) => `
-      <div class="bar-row">
-        <div class="bar-label">${CAT_ICONS[cat]||''} ${cat}</div>
-        <div class="bar-track">
-          <div class="bar-fill" style="width:${total ? Math.round(val/total*100) : 0}%;background:${BAR_COLORS[i%BAR_COLORS.length]};box-shadow:0 0 10px ${BAR_COLORS[i%BAR_COLORS.length]}66"></div>
-        </div>
-        <div class="bar-info">
-          <div class="bar-pct">${Math.round(val/total*100)}%</div>
-          <div class="bar-val">${fmt(val)}</div>
-        </div>
-      </div>
-    `).join('');
-  }
+  window.addEventListener('resize', initMobileLayout);
+  initMobileLayout();
 
   // ── LOGIN ──
   function doLogin() {
@@ -1420,6 +1554,7 @@
     if (e.key === 'Enter' && document.getElementById('login-overlay')) doLogin();
   });
 
+  // initial render with empty state while Firebase loads
   render();
 </script>
 </body>
